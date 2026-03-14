@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 import type { RobloxClient } from "../types.js";
 import { config } from "../config.js";
 import { logger } from "../utils/logger.js";
+import { sendWebhook } from "../utils/webhook.js";
 
 export let clientRegistry: Map<string, RobloxClient> = new Map();
 export let wsToClientId: Map<WebSocket, string> = new Map();
@@ -41,11 +42,15 @@ export function registerClient(info: {
     wsToClientId.set(info.ws, clientId);
   }
   logger.info("Registry", `Client registered: ${clientId} (${info.username} @ ${info.placeName}, ${info.transport})`);
+  sendWebhook("client.connected", { Username: info.username, Place: info.placeName, Transport: info.transport, ClientId: clientId });
   return clientId;
 }
 
 export function unregisterClient(clientId: string): void {
   const entry = clientRegistry.get(clientId);
+  if (entry) {
+    sendWebhook("client.disconnected", { Username: entry.username, Place: entry.placeName, ClientId: clientId });
+  }
   if (entry?.ws) {
     wsToClientId.delete(entry.ws);
   }

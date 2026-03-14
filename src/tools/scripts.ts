@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SendArbitraryDataToClient, GetResponseOfIdFromClient } from "../bridge/transport.js";
+import { resolveTargetClient } from "../bridge/registry.js";
 import { getToolTimeout } from "../config.js";
 import { clientIdSchema, checkSendResult, makeTextResponse } from "./helpers.js";
+import { getCachedScript, setCachedScript, clearScriptCache, getScriptCacheStats } from "../utils/script-cache.js";
 
 export function registerScriptTools(server: McpServer): void {
   server.registerTool(
@@ -24,7 +26,16 @@ export function registerScriptTools(server: McpServer): void {
         return makeTextResponse("Must provide either scriptGetterSource or scriptPath, not both.");
       }
 
-      const scriptProxyMatch = (scriptPath ?? scriptGetterSource ?? "").match(/^<ScriptProxy: (.+)>$/);
+      // Check disk cache first
+      const cacheKey = scriptPath ?? scriptGetterSource ?? "";
+      const client = resolveTargetClient(clientId);
+      const placeId = client?.placeId ?? 0;
+      const cached = getCachedScript(placeId, cacheKey);
+      if (cached) {
+        return { success: true, content: [{ type: "text" as const, text: `[CACHED]\n${cached}` }] };
+      }
+
+      const scriptProxyMatch = cacheKey.match(/^<ScriptProxy: (.+)>$/);
       const toolCallId = SendArbitraryDataToClient("get-script-content",
         scriptProxyMatch
           ? { debugId: scriptProxyMatch[1] }
@@ -35,6 +46,10 @@ export function registerScriptTools(server: McpServer): void {
       if (err) return err;
       const response = await GetResponseOfIdFromClient(toolCallId!, getToolTimeout("get-script-content"));
       if (!response?.output) return makeTextResponse("Failed to get script content.");
+
+      // Cache the result
+      setCachedScript(placeId, cacheKey, response.output);
+
       return { success: true, content: [{ type: "text" as const, text: response.output }] };
     }
   );
@@ -61,6 +76,31 @@ export function registerScriptTools(server: McpServer): void {
       const response = await GetResponseOfIdFromClient(toolCallId!, getToolTimeout("search-scripts-sources"));
       if (!response?.output) return makeTextResponse("Failed to search script sources.");
       return { content: [{ type: "text" as const, text: response.output }] };
+    }
+  );
+
+  server.registerTool(
+    "clear-script-cache",
+    {
+      title: "Clear the decompiled script cache",
+      description: "Removes all cached decompiled scripts from disk.",
+    },
+    async () => {
+      const result = clearScriptCache();
+      return makeTextResponse(`Cleared ${result.deleted} cached files.`);
+    }
+  );
+
+  server.registerTool(
+    "script-cache-stats",
+    {
+      title: "Get script cache statistics",
+      description: "Returns the number of cached scripts and total cache size.",
+    },
+    async () => {
+      const stats = getScriptCacheStats();
+      const sizeMB = (stats.sizeBytes / 1024 / 1024).toFixed(2);
+      return makeTextResponse(`Cache: ${stats.entries} scripts, ${sizeMB} MB`);
     }
   );
 }

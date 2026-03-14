@@ -193,6 +193,85 @@ export function startAsPrimary(): Promise<void> {
         return;
       }
 
+      // ── Execute API (for dashboard script editor) ──
+      if (url.pathname === "/api/execute" && req.method === "POST") {
+        if (!checkAuth(req, res)) return;
+        const body = await readBody(req);
+        try {
+          const { code, clientId } = JSON.parse(body);
+          const target = resolveTargetClient(clientId);
+          if (!target) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "No client connected" }));
+            return;
+          }
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-data-by-code", { source: `setthreadidentity(8);${code}` }, id, target.clientId);
+          const response = await getResp(id, 30000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? response?.error ?? "No response" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Instance tree API (for dashboard explorer) ──
+      if (url.pathname === "/api/instances" && req.method === "GET") {
+        if (!checkAuth(req, res)) return;
+        const root = url.searchParams.get("root") || "game";
+        const maxDepth = parseInt(url.searchParams.get("maxDepth") || "2", 10);
+        const maxChildren = parseInt(url.searchParams.get("maxChildren") || "30", 10);
+        const cid = url.searchParams.get("clientId") || undefined;
+        const target = resolveTargetClient(cid);
+        if (!target) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No client connected" }));
+          return;
+        }
+        try {
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-descendants-tree", { root, maxDepth, maxChildren }, id, target.clientId);
+          const response = await getResp(id, 15000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? "No response" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Remote spy logs API (for dashboard live viewer) ──
+      if (url.pathname === "/api/remote-spy" && req.method === "GET") {
+        if (!checkAuth(req, res)) return;
+        const cid = url.searchParams.get("clientId") || undefined;
+        const target = resolveTargetClient(cid);
+        if (!target) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No client connected" }));
+          return;
+        }
+        try {
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-remote-spy-logs", { direction: "Both", limit: 100, maxCallsPerRemote: 3 }, id, target.clientId);
+          const response = await getResp(id, 15000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? "No response" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
       res.writeHead(200); res.end("VS Connect MCP Server Running");
     });
 

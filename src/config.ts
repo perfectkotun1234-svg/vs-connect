@@ -14,6 +14,7 @@ export const config = {
   baseUrl: getArg("--baseurl"),
   noAuth: hasFlag("--no-auth"),
   token: process.env.VS_CONNECT_TOKEN || null,
+  webhookUrl: process.env.VS_CONNECT_WEBHOOK || getArg("--webhook") || null,
 
   httpPollTimeout: 10000,
   promotionJitterMax: 300,
@@ -45,6 +46,12 @@ export const config = {
     "dump-constants": 30000,
     "hook-loadstring": 15000,
     "list-loadstring-calls": 15000,
+    "list-scripts": 1000,
+    "run-script": 30000,
+    "execute-all": 30000,
+    "get-data-all": 30000,
+    "clear-script-cache": 1000,
+    "script-cache-stats": 1000,
   } as Record<string, number>,
 
   rateLimits: {
