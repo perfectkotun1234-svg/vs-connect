@@ -13,7 +13,7 @@ An enhanced MCP (Model Context Protocol) server for interacting with Roblox game
 - Auto-decompile cache — decompiled scripts cached to disk for instant re-access
 - Discord webhook notifications on client connect/disconnect
 - Multi-client execution — run scripts on all clients at once
-- Interactive dashboard with live remote spy, script editor, and instance explorer
+- Full interactive dashboard with 8 pages
 
 ## Setup
 
@@ -46,10 +46,14 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/notpoiu/roblox-execut
 Visit [http://localhost:16384](http://localhost:16384) in your browser to access the VS Connect dashboard.
 
 The dashboard includes:
-- **Client Overview** — see all connected clients with avatars and connection graph
-- **Remote Spy Viewer** — live auto-refreshing view of all remote calls with direction filters
-- **Script Editor** — write and execute Luau code directly from your browser (Ctrl+Enter to run)
-- **Instance Explorer** — browse the game's instance tree with expandable nodes
+- **Overview** — FPS, ping, memory, player count, server info, connected clients
+- **Players** — live player list with avatars, health bars, positions, teams
+- **Console** — live console output viewer with auto-refresh
+- **Script Editor** — write and execute Luau code with Ctrl+Enter
+- **Quick Actions** — one-click ESP, fly, noclip, speed, infinite jump, fullbright, anti-AFK, rejoin, reset
+- **Remote Spy** — auto-refreshing remote call viewer
+- **Instance Explorer** — expandable instance tree browser
+- **Script History** — tracks all executed scripts with timestamps
 
 ### 5. Register in Claude Code
 
@@ -78,3 +82,7 @@ The codebase uses a bridge system managing client registry and transport, with t
 - **Deobfuscation** — analyze obfuscated scripts
 - **Multi-Client** — execute on all connected clients simultaneously
 - **Script Cache** — disk-based decompile caching for performance
+
+## License
+
+MIT
