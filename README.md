@@ -9,8 +9,11 @@ An enhanced MCP (Model Context Protocol) server for interacting with Roblox game
 - Adaptive HTTP polling (0.1s–0.5s)
 - Configurable per-tool timeouts (5s–45s)
 - Heartbeat system with stale detection
-- 24 tools: execution, introspection, remote spy, GUI, screenshots, deobfuscation
-- Dashboard at `localhost:16384`
+- 28 tools: execution, introspection, remote spy, GUI, screenshots, deobfuscation, multi-client
+- Auto-decompile cache — decompiled scripts cached to disk for instant re-access
+- Discord webhook notifications on client connect/disconnect
+- Multi-client execution — run scripts on all clients at once
+- Interactive dashboard with live remote spy, script editor, and instance explorer
 
 ## Setup
 
@@ -38,9 +41,30 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/notpoiu/roblox-execut
 
 > **Note:** You must run this every time you join a new game.
 
-### 4. Register in Claude Code
+### 4. Open the Dashboard
+
+Visit [http://localhost:16384](http://localhost:16384) in your browser to access the VS Connect dashboard.
+
+The dashboard includes:
+- **Client Overview** — see all connected clients with avatars and connection graph
+- **Remote Spy Viewer** — live auto-refreshing view of all remote calls with direction filters
+- **Script Editor** — write and execute Luau code directly from your browser (Ctrl+Enter to run)
+- **Instance Explorer** — browse the game's instance tree with expandable nodes
+
+### 5. Register in Claude Code
 
 Add the MCP server to your Claude Code configuration to start using the tools.
+
+## CLI Options
+
+| Flag | Description | Default |
+|---|---|---|
+| `--port <number>` | HTTP/WS server port | `16384` |
+| `--baseurl <url>` | Connect to remote primary instance | — |
+| `--no-auth` | Disable authentication | Auth enabled |
+| `--webhook <url>` | Discord webhook URL for notifications | — |
+
+Environment variables: `VS_CONNECT_PORT`, `VS_CONNECT_TOKEN`, `VS_CONNECT_WEBHOOK`
 
 ## Architecture
 
@@ -52,3 +76,5 @@ The codebase uses a bridge system managing client registry and transport, with t
 - **GUI Interaction** — click buttons, type in text boxes
 - **Screenshots** — capture game windows
 - **Deobfuscation** — analyze obfuscated scripts
+- **Multi-Client** — execute on all connected clients simultaneously
+- **Script Cache** — disk-based decompile caching for performance
