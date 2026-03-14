@@ -193,6 +193,100 @@ export function startAsPrimary(): Promise<void> {
         return;
       }
 
+      // ── Players API (positions, health, etc.) ──
+      if (url.pathname === "/api/players" && req.method === "GET") {
+        const cid = url.searchParams.get("clientId") || undefined;
+        const target = resolveTargetClient(cid);
+        if (!target) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No client connected" }));
+          return;
+        }
+        try {
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-data-by-code", { source: `setthreadidentity(8);local Players = game:GetService("Players"); local result = {}; for _, p in Players:GetPlayers() do local d = {Name = p.Name, DisplayName = p.DisplayName, UserId = p.UserId, Team = p.Team and p.Team.Name or "None"}; local char = p.Character; if char then local hrp = char:FindFirstChild("HumanoidRootPart"); local hum = char:FindFirstChildOfClass("Humanoid"); if hrp then d.Position = {x = math.floor(hrp.Position.X), y = math.floor(hrp.Position.Y), z = math.floor(hrp.Position.Z)} end; if hum then d.Health = math.floor(hum.Health); d.MaxHealth = math.floor(hum.MaxHealth) end end; table.insert(result, d) end; return result` }, id, target.clientId);
+          const response = await getResp(id, 10000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? "[]" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Server Info API (FPS, ping, memory) ──
+      if (url.pathname === "/api/server-info" && req.method === "GET") {
+        const cid = url.searchParams.get("clientId") || undefined;
+        const target = resolveTargetClient(cid);
+        if (!target) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No client connected" }));
+          return;
+        }
+        try {
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-data-by-code", { source: `setthreadidentity(8);local Stats = game:GetService("Stats"); local fps = math.floor(1 / game:GetService("RunService").RenderStepped:Wait()); local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()); local mem = math.floor(Stats:GetTotalMemoryUsageMb()); local placeId = game.PlaceId; local jobId = game.JobId; local players = #game:GetService("Players"):GetPlayers(); local maxPlayers = game:GetService("Players").MaxPlayers; return {FPS = fps, Ping = ping, Memory = mem, PlaceId = placeId, JobId = jobId, Players = players, MaxPlayers = maxPlayers, PlaceName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name}` }, id, target.clientId);
+          const response = await getResp(id, 10000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? "{}" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Console Output API ──
+      if (url.pathname === "/api/console" && req.method === "GET") {
+        const cid = url.searchParams.get("clientId") || undefined;
+        const target = resolveTargetClient(cid);
+        if (!target) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No client connected" }));
+          return;
+        }
+        try {
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          send("get-console-output", { limit: 100, newestFirst: true }, id, target.clientId);
+          const response = await getResp(id, 10000);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ output: response?.output ?? "No output" }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Execute (fire-and-forget, no return) API ──
+      if (url.pathname === "/api/execute-fire" && req.method === "POST") {
+        const body = await readBody(req);
+        try {
+          const { code, clientId } = JSON.parse(body);
+          const target = resolveTargetClient(clientId);
+          if (!target) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "No client connected" }));
+            return;
+          }
+          const { SendArbitraryDataToClient: send } = await import("./transport.js");
+          send("execute", { source: `setthreadidentity(8)\n${code}` }, undefined, target.clientId);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true }));
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
       // ── Execute API (for dashboard script editor) ──
       if (url.pathname === "/api/execute" && req.method === "POST") {
         if (!checkAuth(req, res)) return;

@@ -3,1208 +3,832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VS Connect — Dashboard</title>
+    <title>VS Connect</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ── Reset & Tokens ──────────────────────────────────────── */
         :root {
-            --bg: #09090b;
-            --surface: rgba(255,255,255,0.03);
-            --surface-raised: rgba(255,255,255,0.05);
-            --border: rgba(255,255,255,0.06);
-            --border-highlight: rgba(255,255,255,0.1);
-            --accent: #2dd4bf;
-            --accent-dim: rgba(45,212,191,0.15);
-            --accent-glow: rgba(45,212,191,0.3);
+            --bg: #0a0a0c;
+            --bg-secondary: #111115;
+            --surface: #16161a;
+            --surface-hover: #1c1c22;
+            --border: #252530;
+            --border-hover: #35354a;
+            --accent: #7c5cfc;
+            --accent-dim: rgba(124,92,252,0.15);
+            --accent-glow: rgba(124,92,252,0.4);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.15);
+            --red: #ef4444;
+            --red-dim: rgba(239,68,68,0.12);
             --amber: #f59e0b;
             --amber-dim: rgba(245,158,11,0.15);
-            --success: #34d399;
-            --error: #f87171;
-            --error-dim: rgba(248,113,113,0.12);
-            --text: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-tertiary: #52525b;
-            --mono: 'IBM Plex Mono', monospace;
-            --sans: 'Instrument Sans', system-ui, sans-serif;
-            --radius: 16px;
-            --radius-sm: 10px;
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6,182,212,0.15);
+            --text: #e4e4e7;
+            --text-dim: #a1a1aa;
+            --text-muted: #52525b;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', system-ui, sans-serif;
         }
 
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
-        }
-
-        html { height: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: var(--sans);
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
         }
 
-        /* ── Animated background layers ──────────────────────────── */
-        .bg-layer {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-        }
-
-        .bg-gradient {
-            background:
-                radial-gradient(ellipse 80% 60% at 10% 20%, rgba(45,212,191,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 80% at 90% 80%, rgba(245,158,11,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 50% at 50% 50%, rgba(45,212,191,0.03) 0%, transparent 80%);
-            animation: bgShift 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes bgShift {
-            0% { opacity: 1; filter: hue-rotate(0deg); }
-            100% { opacity: 0.7; filter: hue-rotate(15deg); }
-        }
-
-        .bg-grid {
-            background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 32px 32px;
-        }
-
-        .bg-noise {
-            opacity: 0.015;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 256px 256px;
-        }
-
-        /* ── Shell layout ────────────────────────────────────────── */
-        .shell {
-            position: relative; z-index: 1;
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem 3rem;
-            min-height: 100vh;
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 56px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-        }
-
-        /* ── Header ──────────────────────────────────────────────── */
-        .header {
-            display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            margin-bottom: 2.5rem;
-            animation: fadeDown 0.7s cubic-bezier(0.16,1,0.3,1) both;
+            padding: 12px 0;
+            gap: 4px;
+            flex-shrink: 0;
         }
 
-        @keyframes fadeDown {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .logo-mark {
+        .sidebar-logo {
             width: 36px; height: 36px;
             border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent) 0%, rgba(45,212,191,0.4) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #09090b;
-            letter-spacing: -0.04em;
-            box-shadow: 0 0 20px var(--accent-dim), inset 0 1px 0 rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: #fff;
+            margin-bottom: 16px;
+            box-shadow: 0 0 20px var(--accent-dim);
         }
 
-        .logo-text {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: var(--text);
-            letter-spacing: -0.01em;
-        }
-
-        .logo-text span {
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .uptime-chip {
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-tertiary);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 0.3rem 0.65rem;
-            border-radius: 99px;
-            letter-spacing: 0.02em;
-        }
-
-        .role-chip {
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 0.3rem 0.7rem;
-            border-radius: 99px;
-            background: var(--accent-dim);
-            color: var(--accent);
-            border: 1px solid rgba(45,212,191,0.2);
-        }
-
-        /* ── Connection graph ─────────────────────────────────────── */
-        .graph-section {
-            padding: 1rem 0 2rem;
-            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s both;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .graph-canvas {
-            width: 100%;
-            height: 320px;
-            display: block;
-        }
-
-        .graph-label {
-            text-align: center;
-            margin-top: 0.75rem;
-        }
-
-        .graph-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.035em;
-            margin-bottom: 0.25rem;
-            transition: color 0.5s ease;
-        }
-
-        .graph-sub {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        @keyframes nodeAppear {
-            from { transform: scale(0); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        /* ── Stats row ───────────────────────────────────────────── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 2rem;
-            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both;
-        }
-
-        .stat-tile {
-            position: relative;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 1.25rem 1rem;
-            overflow: hidden;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .stat-tile:hover {
-            border-color: var(--border-highlight);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .stat-tile::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .stat-tile:hover::before { opacity: 1; }
-
-        .stat-tile-icon {
-            font-size: 1.1rem;
-            margin-bottom: 0.6rem;
-            opacity: 0.7;
-        }
-
-        .stat-tile-value {
-            font-family: var(--mono);
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text);
-            line-height: 1;
-            margin-bottom: 0.35rem;
-        }
-
-        .stat-tile-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-tertiary);
-            font-weight: 500;
-        }
-
-        /* ── Client panel ────────────────────────────────────────── */
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.4s both;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.9rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface-raised);
-        }
-
-        .panel-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-secondary);
-        }
-
-        .panel-title-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent-dim);
-        }
-
-        .panel-count {
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-tertiary);
-            background: var(--surface);
-            padding: 0.15rem 0.5rem;
-            border-radius: 99px;
-            border: 1px solid var(--border);
-        }
-
-        .panel-body {
-            padding: 0.5rem;
-            overflow-y: auto;
-            max-height: 320px;
-            flex: 1;
-        }
-
-        .panel-body::-webkit-scrollbar { width: 4px; }
-        .panel-body::-webkit-scrollbar-track { background: transparent; }
-        .panel-body::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 99px; }
-
-        .client-empty {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 1rem;
-            color: var(--text-tertiary);
-            font-size: 0.85rem;
-            gap: 0.5rem;
-        }
-
-        .client-empty-icon {
-            font-size: 2rem;
-            opacity: 0.3;
-        }
-
-        .client-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.85rem 0.9rem;
-            border-radius: var(--radius-sm);
-            transition: background 0.2s ease;
-            cursor: default;
-        }
-
-        .client-card:hover {
-            background: var(--surface-raised);
-        }
-
-        .client-avatar {
-            width: 34px; height: 34px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--accent-dim), var(--amber-dim));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.75rem;
-            color: var(--accent);
-            flex-shrink: 0;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .client-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .client-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .client-name-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.2rem;
-        }
-
-        .client-username {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .client-transport {
-            font-family: var(--mono);
-            font-size: 0.55rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 0.1rem 0.4rem;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        .transport-ws {
-            background: var(--accent-dim);
-            color: var(--accent);
-        }
-
-        .transport-http {
-            background: var(--amber-dim);
-            color: var(--amber);
-        }
-
-        .client-place {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .client-id {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            color: var(--text-tertiary);
-            margin-top: 0.15rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* ── Tabs ──────────────────────────────────────────────────── */
-        .tabs {
-            display: flex;
-            gap: 0.25rem;
-            margin: 1.5rem 0 0.75rem;
-            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s both;
-        }
-
-        .tab-btn {
-            font-family: var(--sans);
-            font-size: 0.72rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-tertiary);
+        .nav-btn {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 18px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+            position: relative;
         }
 
-        .tab-btn:hover { border-color: var(--border-highlight); color: var(--text-secondary); }
-        .tab-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(45,212,191,0.3); }
-
-        .tab-content { display: none; animation: fadeUp 0.4s ease; }
-        .tab-content.active { display: block; }
-
-        /* ── Remote Spy Panel ──────────────────────────────────────── */
-        .spy-controls {
-            display: flex; gap: 0.5rem; margin-bottom: 0.75rem;
+        .nav-btn:hover { background: var(--surface); color: var(--text-dim); }
+        .nav-btn.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-btn.active::before {
+            content: '';
+            position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+            width: 3px; height: 20px; border-radius: 0 3px 3px 0;
+            background: var(--accent);
         }
 
-        .spy-btn {
+        .nav-sep { width: 24px; height: 1px; background: var(--border); margin: 8px 0; }
+
+        /* ── Main Content ── */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            height: 48px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+
+        .topbar-title { font-size: 13px; font-weight: 600; color: var(--text); }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green-dim); }
+        .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red-dim); animation: none; }
+
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .chip {
             font-family: var(--mono);
-            font-size: 0.7rem;
-            padding: 0.35rem 0.75rem;
+            font-size: 10px;
+            padding: 3px 8px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--surface);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
+            color: var(--text-dim);
         }
 
-        .spy-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .spy-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(45,212,191,0.3); }
+        /* ── Pages ── */
+        .page { flex: 1; overflow-y: auto; display: none; padding: 20px; gap: 16px; }
+        .page.active { display: flex; flex-direction: column; }
 
-        .spy-log {
+        .page::-webkit-scrollbar { width: 6px; }
+        .page::-webkit-scrollbar-track { background: transparent; }
+        .page::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+        /* ── Cards ── */
+        .card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .card-title {
+            font-size: 11px; font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .card-body { padding: 16px; }
+        .card-body.no-pad { padding: 0; }
+
+        /* ── Grid layouts ── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+        /* ── Stat tiles ── */
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .stat:hover { border-color: var(--border-hover); }
+        .stat-value { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--text); }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+        .stat-icon { font-size: 16px; margin-bottom: 8px; }
+
+        /* ── Player list ── */
+        .player-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .player-row:last-child { border-bottom: none; }
+        .player-row:hover { background: var(--surface-hover); }
+
+        .player-avatar {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: var(--accent-dim);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: var(--accent);
+            overflow: hidden; flex-shrink: 0;
+        }
+
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .player-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+        .player-detail { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+
+        .health-bar {
+            width: 60px; height: 6px; border-radius: 3px;
+            background: var(--border); overflow: hidden;
+        }
+
+        .health-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width 0.3s; }
+
+        /* ── Console ── */
+        .console-output {
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.7;
+            color: var(--text-dim);
             max-height: 400px;
             overflow-y: auto;
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            padding: 0.75rem;
-        }
-
-        .spy-log::-webkit-scrollbar { width: 4px; }
-        .spy-log::-webkit-scrollbar-track { background: transparent; }
-        .spy-log::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 99px; }
-
-        .spy-entry { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
-        .spy-entry:last-child { border-bottom: none; }
-        .spy-remote-name { color: var(--accent); font-weight: 600; }
-        .spy-direction { font-size: 0.6rem; padding: 0.1rem 0.3rem; border-radius: 3px; }
-        .spy-dir-out { background: var(--accent-dim); color: var(--accent); }
-        .spy-dir-in { background: var(--amber-dim); color: var(--amber); }
-        .spy-args { color: var(--text-tertiary); margin-top: 0.2rem; word-break: break-all; }
-
-        /* ── Script Editor ──────────────────────────────────────────── */
-        .editor-wrap {
-            display: flex; flex-direction: column; gap: 0.5rem;
-        }
-
-        .editor-textarea {
-            width: 100%;
-            min-height: 200px;
-            background: #0d0d0f;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 0.8rem;
-            padding: 0.75rem;
-            resize: vertical;
-            outline: none;
-            line-height: 1.6;
-            tab-size: 2;
-        }
-
-        .editor-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
-
-        .editor-bar {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .editor-run-btn {
-            font-family: var(--sans);
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.5rem 1.25rem;
-            border-radius: 8px;
-            border: none;
-            background: var(--accent);
-            color: #09090b;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .editor-run-btn:hover { filter: brightness(1.15); }
-        .editor-run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .editor-output {
-            background: #0d0d0f;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.75rem;
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            min-height: 60px;
-            max-height: 200px;
-            overflow-y: auto;
+            padding: 12px 16px;
             white-space: pre-wrap;
             word-break: break-all;
         }
 
-        /* ── Instance Explorer ──────────────────────────────────────── */
-        .explorer-controls {
-            display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center;
+        .console-output::-webkit-scrollbar { width: 4px; }
+        .console-output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+        /* ── Script Editor ── */
+        .editor-area {
+            width: 100%;
+            min-height: 280px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 12px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.7;
+            tab-size: 2;
+        }
+
+        .editor-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+
+        .editor-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 10px;
+        }
+
+        .btn {
+            font-family: var(--sans);
+            font-size: 12px; font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn:hover { border-color: var(--border-hover); background: var(--surface-hover); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.15); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-sm { font-size: 11px; padding: 5px 12px; border-radius: 6px; }
+
+        .editor-result {
+            margin-top: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            max-height: 160px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        /* ── Quick Actions ── */
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 6px;
+            padding: 16px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .action-btn:hover { border-color: var(--border-hover); background: var(--surface-hover); color: var(--text); }
+        .action-btn.active-toggle { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+        .action-icon { font-size: 20px; }
+
+        /* ── Remote Spy ── */
+        .spy-entry-row {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+
+        .spy-entry-row:last-child { border-bottom: none; }
+
+        .spy-remote { color: var(--cyan); font-weight: 600; }
+        .spy-dir {
+            font-size: 9px; font-weight: 700;
+            padding: 1px 5px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .spy-dir-out { background: var(--accent-dim); color: var(--accent); }
+        .spy-dir-in { background: var(--amber-dim); color: var(--amber); }
+        .spy-args { color: var(--text-muted); margin-top: 3px; word-break: break-all; font-size: 10px; }
+
+        /* ── Instance Explorer ── */
+        .explorer-bar {
+            display: flex; gap: 8px; padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
         }
 
         .explorer-input {
             flex: 1;
-            font-family: var(--mono);
-            font-size: 0.75rem;
-            padding: 0.4rem 0.75rem;
+            font-family: var(--mono); font-size: 12px;
+            padding: 6px 12px;
             border-radius: 6px;
             border: 1px solid var(--border);
-            background: #0d0d0f;
+            background: var(--bg);
             color: var(--text);
             outline: none;
         }
 
         .explorer-input:focus { border-color: var(--accent); }
 
-        .explorer-tree {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            max-height: 450px;
+        .tree-wrap {
+            padding: 8px 12px;
+            max-height: 500px;
             overflow-y: auto;
-            padding: 0.5rem;
             font-family: var(--mono);
-            font-size: 0.72rem;
+            font-size: 12px;
         }
 
-        .explorer-tree::-webkit-scrollbar { width: 4px; }
-        .explorer-tree::-webkit-scrollbar-track { background: transparent; }
-        .explorer-tree::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 99px; }
+        .tree-wrap::-webkit-scrollbar { width: 4px; }
+        .tree-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-        .tree-node { padding: 0.15rem 0; }
-        .tree-toggle { cursor: pointer; user-select: none; color: var(--text-secondary); }
-        .tree-toggle:hover { color: var(--accent); }
-        .tree-name { color: var(--text); }
-        .tree-class { color: var(--text-tertiary); font-size: 0.65rem; }
-        .tree-children { padding-left: 1.2rem; border-left: 1px solid var(--border); margin-left: 0.4rem; }
+        .t-node { padding: 2px 0; }
+        .t-toggle { cursor: pointer; user-select: none; color: var(--text-dim); }
+        .t-toggle:hover { color: var(--accent); }
+        .t-name { color: var(--text); }
+        .t-class { color: var(--text-muted); font-size: 10px; }
+        .t-children { padding-left: 18px; border-left: 1px solid var(--border); margin-left: 6px; }
 
-        /* ── Footer ──────────────────────────────────────────────── */
-        .footer {
-            text-align: center;
-            padding: 1.5rem 0 0;
-            font-size: 0.7rem;
-            color: var(--text-tertiary);
-            letter-spacing: 0.02em;
-            animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.55s both;
-        }
-
-        .footer a {
-            color: var(--text-tertiary);
-            text-decoration: none;
+        /* ── Script History ── */
+        .history-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 16px;
             border-bottom: 1px solid var(--border);
-            transition: color 0.2s ease, border-color 0.2s ease;
+            font-family: var(--mono);
+            font-size: 11px;
         }
 
-        .footer a:hover {
-            color: var(--accent);
-            border-color: var(--accent);
+        .history-row:last-child { border-bottom: none; }
+        .history-row:hover { background: var(--surface-hover); }
+        .history-code { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 12px; }
+        .history-time { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; color: var(--text-muted); font-size: 13px; gap: 8px;
         }
 
-        /* ── Responsive ──────────────────────────────────────────── */
-        @media (max-width: 520px) {
-            .shell { padding: 1rem 1rem 2rem; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            .stats-row .stat-tile:last-child { grid-column: span 2; }
-            .header { flex-wrap: wrap; gap: 0.5rem; }
-        }
+        .empty-icon { font-size: 28px; opacity: 0.3; }
     </style>
 </head>
 <body>
-    <!-- Background layers -->
-    <div class="bg-layer bg-gradient"></div>
-    <div class="bg-layer bg-grid"></div>
-    <div class="bg-layer bg-noise"></div>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">VS</div>
+        <button class="nav-btn active" data-page="overview" title="Overview">&#9633;</button>
+        <button class="nav-btn" data-page="players" title="Players">&#9823;</button>
+        <button class="nav-btn" data-page="console" title="Console">&#9638;</button>
+        <div class="nav-sep"></div>
+        <button class="nav-btn" data-page="editor" title="Script Editor">&#9998;</button>
+        <button class="nav-btn" data-page="actions" title="Quick Actions">&#9889;</button>
+        <button class="nav-btn" data-page="spy" title="Remote Spy">&#9788;</button>
+        <div class="nav-sep"></div>
+        <button class="nav-btn" data-page="explorer" title="Instance Explorer">&#9776;</button>
+        <button class="nav-btn" data-page="history" title="Script History">&#8986;</button>
+    </nav>
 
-    <div class="shell">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-left">
-                <div class="logo-mark">VS</div>
-                <div class="logo-text">VS <span>Connect</span></div>
-            </div>
-            <div class="header-right">
-                <div class="uptime-chip" id="uptimeChip">00:00:00</div>
-                <div class="role-chip" id="roleChip">—</div>
-            </div>
-        </header>
-
-        <!-- Connection graph -->
-        <section class="graph-section">
-            <svg class="graph-canvas" id="graphCanvas" viewBox="0 0 720 320"></svg>
-            <div class="graph-label">
-                <h1 class="graph-title" id="graphTitle">Disconnected</h1>
-                <p class="graph-sub" id="graphSub">Waiting for Roblox clients…</p>
-            </div>
-        </section>
-
-        <!-- Stats -->
-        <div class="stats-row">
-            <div class="stat-tile">
-                <div class="stat-tile-icon">◈</div>
-                <div class="stat-tile-value" id="statClients">0</div>
-                <div class="stat-tile-label">Clients</div>
-            </div>
-            <div class="stat-tile">
-                <div class="stat-tile-icon">⟁</div>
-                <div class="stat-tile-value" id="statRelay">0</div>
-                <div class="stat-tile-label">Relay Peers</div>
+    <div class="main">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <span class="topbar-title" id="pageTitle">Overview</span>
+            <div class="topbar-right">
+                <div class="chip" id="uptimeChip">00:00:00</div>
+                <div class="chip" id="clientChip">0 clients</div>
+                <div class="status-dot offline" id="statusDot"></div>
             </div>
         </div>
 
-        <!-- Client panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <div class="panel-title">
-                    <div class="panel-title-dot"></div>
-                    Connected Clients
+        <!-- Overview -->
+        <div class="page active" id="page-overview">
+            <div class="grid-4">
+                <div class="stat">
+                    <div class="stat-icon">&#9670;</div>
+                    <div class="stat-value" id="sFPS">—</div>
+                    <div class="stat-label">FPS</div>
                 </div>
-                <div class="panel-count" id="panelCount">0</div>
-            </div>
-            <div class="panel-body" id="clientList">
-                <div class="client-empty">
-                    <div class="client-empty-icon">◌</div>
-                    No clients connected
+                <div class="stat">
+                    <div class="stat-icon">&#9672;</div>
+                    <div class="stat-value" id="sPing">—</div>
+                    <div class="stat-label">Ping (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">&#9671;</div>
+                    <div class="stat-value" id="sMemory">—</div>
+                    <div class="stat-label">Memory (MB)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">&#9673;</div>
+                    <div class="stat-value" id="sPlayers">—</div>
+                    <div class="stat-label">Players</div>
                 </div>
             </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="remote-spy">Remote Spy</button>
-            <button class="tab-btn" data-tab="script-editor">Script Editor</button>
-            <button class="tab-btn" data-tab="instance-explorer">Instance Explorer</button>
-        </div>
-
-        <!-- Remote Spy Tab -->
-        <div class="tab-content active" id="tab-remote-spy">
-            <div class="spy-controls">
-                <button class="spy-btn active" id="spyAutoRefresh">Auto-Refresh: ON</button>
-                <button class="spy-btn" id="spyRefreshBtn">Refresh Now</button>
-                <button class="spy-btn" id="spyFilterOutgoing">Outgoing</button>
-                <button class="spy-btn" id="spyFilterIncoming">Incoming</button>
-            </div>
-            <div class="spy-log" id="spyLog">
-                <div class="client-empty"><div class="client-empty-icon">◌</div>No remote spy data yet. Make sure Cobalt is loaded.</div>
-            </div>
-        </div>
-
-        <!-- Script Editor Tab -->
-        <div class="tab-content" id="tab-script-editor">
-            <div class="editor-wrap">
-                <textarea class="editor-textarea" id="editorCode" placeholder="-- Write your Luau code here...
-print('Hello from VS Connect!')" spellcheck="false"></textarea>
-                <div class="editor-bar">
-                    <span style="font-size:0.7rem;color:var(--text-tertiary)">Ctrl+Enter to run</span>
-                    <button class="editor-run-btn" id="editorRunBtn">Execute</button>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">&#9635; Server Info</div>
+                    </div>
+                    <div class="card-body">
+                        <div style="font-family:var(--mono);font-size:12px;line-height:2;color:var(--text-dim)">
+                            <div>Place: <span id="sPlace" style="color:var(--text)">—</span></div>
+                            <div>PlaceId: <span id="sPlaceId" style="color:var(--text)">—</span></div>
+                            <div>JobId: <span id="sJobId" style="color:var(--text);font-size:10px">—</span></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="editor-output" id="editorOutput">Output will appear here...</div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">&#9635; Connected Clients</div>
+                        <span class="chip" id="ccCount">0</span>
+                    </div>
+                    <div class="card-body no-pad" id="ccList">
+                        <div class="empty-state"><div class="empty-icon">&#9675;</div>No clients</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Instance Explorer Tab -->
-        <div class="tab-content" id="tab-instance-explorer">
-            <div class="explorer-controls">
-                <input class="explorer-input" id="explorerRoot" value="game" placeholder="Root path (e.g. game.Workspace)" />
-                <button class="spy-btn" id="explorerLoadBtn">Load</button>
-            </div>
-            <div class="explorer-tree" id="explorerTree">
-                <div class="client-empty"><div class="client-empty-icon">◌</div>Click Load to explore instances</div>
+        <!-- Players -->
+        <div class="page" id="page-players">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">&#9823; Players in Server</div>
+                    <button class="btn btn-sm" id="playersRefresh">Refresh</button>
+                </div>
+                <div class="card-body no-pad" id="playersList">
+                    <div class="empty-state"><div class="empty-icon">&#9675;</div>Loading players...</div>
+                </div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            VS Connect · <a href="https://github.com/perfectkotun1234-svg/vs-connect" target="_blank" rel="noopener">GitHub</a>
-        </footer>
+        <!-- Console -->
+        <div class="page" id="page-console">
+            <div class="card" style="flex:1;display:flex;flex-direction:column">
+                <div class="card-header">
+                    <div class="card-title">&#9638; Console Output</div>
+                    <button class="btn btn-sm" id="consoleRefresh">Refresh</button>
+                </div>
+                <div class="console-output" id="consoleOutput" style="flex:1">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Script Editor -->
+        <div class="page" id="page-editor">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">&#9998; Script Editor</div>
+                </div>
+                <div class="card-body">
+                    <textarea class="editor-area" id="editorCode" placeholder="-- Write Luau code here..." spellcheck="false">print("Hello from VS Connect!")</textarea>
+                    <div class="editor-toolbar">
+                        <span style="font-size:11px;color:var(--text-muted)">Ctrl+Enter to execute</span>
+                        <div style="display:flex;gap:8px">
+                            <button class="btn btn-sm" id="editorClear">Clear</button>
+                            <button class="btn btn-primary btn-sm" id="editorRun">Execute</button>
+                        </div>
+                    </div>
+                    <div class="editor-result" id="editorResult">Output appears here...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="page" id="page-actions">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">&#9889; Quick Actions</div>
+                </div>
+                <div class="card-body">
+                    <div class="action-grid">
+                        <button class="action-btn" data-action="esp" id="act-esp">
+                            <span class="action-icon">&#128065;</span>ESP
+                        </button>
+                        <button class="action-btn" data-action="fly" id="act-fly">
+                            <span class="action-icon">&#9992;</span>Fly (E)
+                        </button>
+                        <button class="action-btn" data-action="noclip" id="act-noclip">
+                            <span class="action-icon">&#128683;</span>Noclip (N)
+                        </button>
+                        <button class="action-btn" data-action="speed" id="act-speed">
+                            <span class="action-icon">&#9889;</span>Speed
+                        </button>
+                        <button class="action-btn" data-action="infinite_jump" id="act-infinite_jump">
+                            <span class="action-icon">&#11014;</span>Inf Jump
+                        </button>
+                        <button class="action-btn" data-action="fullbright" id="act-fullbright">
+                            <span class="action-icon">&#9728;</span>Fullbright
+                        </button>
+                        <button class="action-btn" data-action="anti_afk" id="act-anti_afk">
+                            <span class="action-icon">&#9200;</span>Anti-AFK
+                        </button>
+                        <button class="action-btn" data-action="rejoin" id="act-rejoin">
+                            <span class="action-icon">&#128260;</span>Rejoin
+                        </button>
+                        <button class="action-btn" data-action="reset_char" id="act-reset_char">
+                            <span class="action-icon">&#128128;</span>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remote Spy -->
+        <div class="page" id="page-spy">
+            <div class="card" style="flex:1;display:flex;flex-direction:column">
+                <div class="card-header">
+                    <div class="card-title">&#9788; Remote Spy</div>
+                    <div style="display:flex;gap:6px">
+                        <button class="btn btn-sm" id="spyToggle">Auto: ON</button>
+                        <button class="btn btn-sm" id="spyRefresh">Refresh</button>
+                    </div>
+                </div>
+                <div class="card-body no-pad" id="spyLog" style="flex:1;max-height:600px;overflow-y:auto">
+                    <div class="empty-state"><div class="empty-icon">&#9675;</div>Load Cobalt remote spy first</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instance Explorer -->
+        <div class="page" id="page-explorer">
+            <div class="card" style="flex:1;display:flex;flex-direction:column">
+                <div class="explorer-bar">
+                    <input class="explorer-input" id="explorerRoot" value="game" placeholder="Root path..." />
+                    <button class="btn btn-sm btn-primary" id="explorerLoad">Load</button>
+                </div>
+                <div class="tree-wrap" id="explorerTree" style="flex:1">
+                    <div class="empty-state"><div class="empty-icon">&#9675;</div>Enter a root path and click Load</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script History -->
+        <div class="page" id="page-history">
+            <div class="card" style="flex:1;display:flex;flex-direction:column">
+                <div class="card-header">
+                    <div class="card-title">&#8986; Script History</div>
+                    <button class="btn btn-sm" id="historyClear">Clear</button>
+                </div>
+                <div class="card-body no-pad" id="historyList" style="flex:1;max-height:600px;overflow-y:auto">
+                    <div class="empty-state"><div class="empty-icon">&#9675;</div>No scripts executed yet</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const SVG_NS = 'http://www.w3.org/2000/svg';
-        const graphCanvas = document.getElementById('graphCanvas');
-        const graphTitle = document.getElementById('graphTitle');
-        const graphSub = document.getElementById('graphSub');
-        const statClients = document.getElementById('statClients');
-        const statRelay = document.getElementById('statRelay');
-        const roleChip = document.getElementById('roleChip');
-        const panelCount = document.getElementById('panelCount');
-        const clientList = document.getElementById('clientList');
-        const uptimeChip = document.getElementById('uptimeChip');
-
-        const CX = 360, CY = 160;
-        const ORBIT_RX = 200, ORBIT_RY = 110;
-        const NODE_COLORS = ['#2dd4bf','#38bdf8','#a78bfa','#fb923c','#f472b6','#facc15','#4ade80','#f87171'];
-        let prevNodeCount = -1;
-
-        function svgEl(tag, attrs) {
-            const el = document.createElementNS(SVG_NS, tag);
-            for (const k in attrs) el.setAttribute(k, attrs[k]);
-            return el;
-        }
-
-        function renderGraph(clients, relayCount) {
-            const nodes = [];
-            if (clients) {
-                clients.forEach(function(c) {
-                    nodes.push({ label: c.username.slice(0,2).toUpperCase(), name: c.username, type: 'client', userId: c.userId || 0 });
-                });
-            }
-            for (var r = 0; r < (relayCount || 0); r++) {
-                nodes.push({ label: 'R' + (r+1), name: 'Relay ' + (r+1), type: 'relay' });
-            }
-
-            if (nodes.length === prevNodeCount) return;
-            prevNodeCount = nodes.length;
-
-            graphCanvas.innerHTML = '';
-
-            /* defs */
-            const defs = svgEl('defs', {});
-            const glow = svgEl('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' });
-            glow.appendChild(svgEl('feGaussianBlur', { stdDeviation: '4', result: 'blur' }));
-            const merge = svgEl('feMerge', {});
-            merge.appendChild(svgEl('feMergeNode', { 'in': 'blur' }));
-            merge.appendChild(svgEl('feMergeNode', { 'in': 'SourceGraphic' }));
-            glow.appendChild(merge);
-            defs.appendChild(glow);
-            graphCanvas.appendChild(defs);
-
-            /* center glow ring */
-            const pulse = svgEl('circle', {
-                cx: CX, cy: CY, r: '32',
-                fill: nodes.length > 0 ? 'rgba(45,212,191,0.1)' : 'rgba(248,113,113,0.08)',
-                stroke: 'none'
+        // ── Navigation ──
+        var pageTitles = { overview:'Overview', players:'Players', console:'Console', editor:'Script Editor', actions:'Quick Actions', spy:'Remote Spy', explorer:'Instance Explorer', history:'Script History' };
+        document.querySelectorAll('.nav-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var pg = btn.dataset.page;
+                document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+                document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+                btn.classList.add('active');
+                document.getElementById('page-'+pg).classList.add('active');
+                document.getElementById('pageTitle').textContent = pageTitles[pg] || pg;
             });
-            pulse.innerHTML = '<animate attributeName="r" values="28;38;28" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.15;0.05;0.15" dur="3s" repeatCount="indefinite"/>';
-            graphCanvas.appendChild(pulse);
+        });
 
-            /* connecting lines + satellite nodes */
-            var total = nodes.length;
-            var spread = total <= 1 ? 0 : Math.PI * 1.4;
-            var startAngle = total <= 1 ? 0 : -Math.PI / 2 - spread / 2;
+        // ── Uptime ──
+        var startTime = Date.now();
+        setInterval(function() {
+            var s = Math.floor((Date.now()-startTime)/1000);
+            var h=String(Math.floor(s/3600)).padStart(2,'0'), m=String(Math.floor((s%3600)/60)).padStart(2,'0'), ss=String(s%60).padStart(2,'0');
+            document.getElementById('uptimeChip').textContent = h+':'+m+':'+ss;
+        }, 1000);
 
-            nodes.forEach(function(node, i) {
-                var angle = total === 1 ? -Math.PI/2 : startAngle + (spread / (total - 1)) * i;
-                var nx = CX + Math.cos(angle) * ORBIT_RX;
-                var ny = CY + Math.sin(angle) * ORBIT_RY;
-                var color = NODE_COLORS[i % NODE_COLORS.length];
+        function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-                /* line */
-                var line = svgEl('line', {
-                    x1: CX, y1: CY, x2: nx, y2: ny,
-                    stroke: color, 'stroke-width': '1.5', 'stroke-opacity': '0.3',
-                    'stroke-dasharray': '6 4'
-                });
-                graphCanvas.appendChild(line);
-
-                /* outbound travelling dot */
-                var dotOut = svgEl('circle', { r: '2.5', fill: color, opacity: '0.8' });
-                var motionOut = svgEl('animateMotion', {
-                    dur: (2 + Math.random()).toFixed(1) + 's',
-                    repeatCount: 'indefinite',
-                    path: 'M'+CX+','+CY+' L'+nx+','+ny
-                });
-                dotOut.appendChild(motionOut);
-                graphCanvas.appendChild(dotOut);
-
-                /* inbound travelling dot */
-                var dotIn = svgEl('circle', { r: '2.5', fill: color, opacity: '0.6' });
-                var motionIn = svgEl('animateMotion', {
-                    dur: (2.5 + Math.random()).toFixed(1) + 's',
-                    repeatCount: 'indefinite',
-                    path: 'M'+nx+','+ny+' L'+CX+','+CY
-                });
-                dotIn.appendChild(motionIn);
-                graphCanvas.appendChild(dotIn);
-
-                /* satellite node group */
-                var g = svgEl('g', {
-                    style: 'animation: nodeAppear 0.5s cubic-bezier(0.16,1,0.3,1) ' + (i * 0.08).toFixed(2) + 's both; transform-origin: '+nx+'px '+ny+'px'
-                });
-
-                /* outer ring */
-                g.appendChild(svgEl('circle', {
-                    cx: nx, cy: ny, r: '24',
-                    fill: 'none', stroke: color, 'stroke-width': '1', 'stroke-opacity': '0.2'
-                }));
-
-                /* filled circle */
-                g.appendChild(svgEl('circle', {
-                    cx: nx, cy: ny, r: '18',
-                    fill: '#09090b', stroke: color, 'stroke-width': '1.5', 'stroke-opacity': '0.6'
-                }));
-
-                /* avatar image or label */
-                if (node.userId && node.userId > 0) {
-                    var clipId = 'avatarClip' + i;
-                    var clip = svgEl('clipPath', { id: clipId });
-                    clip.appendChild(svgEl('circle', { cx: nx, cy: ny, r: '15' }));
-                    defs.appendChild(clip);
-
-                    var img = svgEl('image', {
-                        x: nx - 15, y: ny - 15, width: '30', height: '30',
-                        href: '/api/avatar?userId=' + node.userId,
-                        'clip-path': 'url(#' + clipId + ')',
-                        preserveAspectRatio: 'xMidYMid slice'
-                    });
-                    g.appendChild(img);
-                } else {
-                    var txt = svgEl('text', {
-                        x: nx, y: ny, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-                        fill: color, 'font-family': 'IBM Plex Mono, monospace',
-                        'font-size': '10', 'font-weight': '600', 'letter-spacing': '0.05em'
-                    });
-                    txt.textContent = node.label;
-                    g.appendChild(txt);
-                }
-
-                /* name below */
-                var nameTxt = svgEl('text', {
-                    x: nx, y: ny + 30, 'text-anchor': 'middle',
-                    fill: '#a1a1aa', 'font-family': 'Instrument Sans, sans-serif',
-                    'font-size': '9', 'font-weight': '500'
-                });
-                nameTxt.textContent = node.name;
-                g.appendChild(nameTxt);
-
-                graphCanvas.appendChild(g);
-            });
-
-            /* center node (on top) */
-            var cg = svgEl('g', { filter: 'url(#glow)' });
-            var centerColor = nodes.length > 0 ? '#2dd4bf' : '#f87171';
-
-            cg.appendChild(svgEl('circle', {
-                cx: CX, cy: CY, r: '26',
-                fill: '#09090b', stroke: centerColor, 'stroke-width': '2'
-            }));
-
-            var mTxt = svgEl('text', {
-                x: CX, y: CY, 'text-anchor': 'middle', 'dominant-baseline': 'central',
-                fill: centerColor, 'font-family': 'Instrument Sans, sans-serif',
-                'font-size': '13', 'font-weight': '700'
-            });
-            mTxt.textContent = 'VSC';
-            cg.appendChild(mTxt);
-            graphCanvas.appendChild(cg);
-        }
-
-        /* initial idle state */
-        renderGraph([], 0);
-
-        const startTime = Date.now();
-
-        function updateUptime() {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-            const s = String(elapsed % 60).padStart(2, '0');
-            uptimeChip.textContent = h + ':' + m + ':' + s;
-        }
-
-        setInterval(updateUptime, 1000);
-
-        function getInitials(name) {
-            return name.slice(0, 2).toUpperCase();
-        }
-
-        function renderClients(clients) {
-            if (!clients || clients.length === 0) {
-                clientList.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>No clients connected</div>';
-                return;
-            }
-
-            clientList.innerHTML = clients.map(function(c) {
-                var transportClass = c.transport === 'ws' ? 'transport-ws' : 'transport-http';
-                var avatarContent = '';
-                if (c.userId && c.userId > 0) {
-                    avatarContent = '<img src="/api/avatar?userId=' + c.userId + '" data-initials="' + getInitials(c.username) + '" />';
-                } else {
-                    avatarContent = getInitials(c.username);
-                }
-                return '<div class="client-card">' +
-                    '<div class="client-avatar">' + avatarContent + '</div>' +
-                    '<div class="client-info">' +
-                        '<div class="client-name-row">' +
-                            '<span class="client-username">' + c.username + '</span>' +
-                            '<span class="client-transport ' + transportClass + '">' + c.transport.toUpperCase() + '</span>' +
-                        '</div>' +
-                        '<div class="client-place">' + c.placeName + '</div>' +
-                        '<div class="client-id">' + c.clientId + '</div>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-
-            /* attach onerror fallback to avatar images */
-            clientList.querySelectorAll('.client-avatar img').forEach(function(img) {
-                img.onerror = function() {
-                    var initials = img.getAttribute('data-initials') || '??';
-                    img.parentNode.textContent = initials;
-                };
-            });
-        }
-
+        // ── Status + Overview ──
         async function updateStatus() {
             try {
-                const res = await fetch('/api/status');
-                const data = await res.json();
-
-                if (data.connected) {
-                    graphTitle.textContent = 'Connected';
-                    graphTitle.style.color = 'var(--success)';
-                    graphSub.textContent = data.clientCount + ' client' + (data.clientCount !== 1 ? 's' : '') + ' active';
+                var res = await fetch('/api/status');
+                var d = await res.json();
+                var dot = document.getElementById('statusDot');
+                dot.className = 'status-dot ' + (d.connected ? 'online' : 'offline');
+                document.getElementById('clientChip').textContent = d.clientCount + ' client' + (d.clientCount!==1?'s':'');
+                document.getElementById('ccCount').textContent = d.clientCount;
+                if (d.clients && d.clients.length > 0) {
+                    document.getElementById('ccList').innerHTML = d.clients.map(function(c) {
+                        var av = c.userId ? '<img src="/api/avatar?userId='+c.userId+'" onerror="this.parentNode.textContent=\''+c.username.slice(0,2).toUpperCase()+'\'">' : c.username.slice(0,2).toUpperCase();
+                        return '<div class="player-row"><div class="player-avatar">'+av+'</div><div class="player-name">'+esc(c.username)+'</div><div class="player-detail">'+esc(c.placeName)+'</div><span class="spy-dir '+(c.transport==='ws'?'spy-dir-out':'spy-dir-in')+'">'+c.transport.toUpperCase()+'</span></div>';
+                    }).join('');
                 } else {
-                    graphTitle.textContent = 'Disconnected';
-                    graphTitle.style.color = 'var(--error)';
-                    graphSub.textContent = 'Waiting for Roblox clients\u2026';
+                    document.getElementById('ccList').innerHTML = '<div class="empty-state"><div class="empty-icon">&#9675;</div>No clients</div>';
                 }
+            } catch(e) {}
+        }
 
-                renderGraph(data.clients || [], data.relayClients || 0);
-
-                statClients.textContent = data.clientCount;
-                statRelay.textContent = data.relayClients;
-                roleChip.textContent = data.role;
-                panelCount.textContent = data.clientCount;
-
-                renderClients(data.clients);
-            } catch (e) {
-                graphTitle.textContent = 'Offline';
-                graphTitle.style.color = 'var(--error)';
-                graphSub.textContent = 'Cannot reach server';
-                renderGraph([], 0);
-            }
+        async function updateServerInfo() {
+            try {
+                var res = await fetch('/api/server-info');
+                var d = await res.json();
+                if (d.error) return;
+                var o = d.output;
+                if (typeof o === 'string') { try { o = JSON.parse(o); } catch(e) { return; } }
+                if (!o) return;
+                document.getElementById('sFPS').textContent = o.FPS || '—';
+                document.getElementById('sPing').textContent = o.Ping || '—';
+                document.getElementById('sMemory').textContent = o.Memory || '—';
+                document.getElementById('sPlayers').textContent = (o.Players||0)+'/'+(o.MaxPlayers||0);
+                document.getElementById('sPlace').textContent = o.PlaceName || '—';
+                document.getElementById('sPlaceId').textContent = o.PlaceId || '—';
+                document.getElementById('sJobId').textContent = o.JobId || '—';
+            } catch(e) {}
         }
 
         setInterval(updateStatus, 2000);
+        setInterval(updateServerInfo, 5000);
         updateStatus();
+        updateServerInfo();
 
-        /* ── Tab switching ─────────────────────────────────────── */
-        document.querySelectorAll('.tab-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        // ── Players ──
+        async function loadPlayers() {
+            try {
+                var res = await fetch('/api/players');
+                var d = await res.json();
+                if (d.error) { document.getElementById('playersList').innerHTML = '<div class="empty-state">'+esc(d.error)+'</div>'; return; }
+                var o = d.output;
+                if (typeof o === 'string') { try { o = JSON.parse(o); } catch(e) { document.getElementById('playersList').innerHTML = '<pre style="padding:16px;font-size:11px;color:var(--text-dim)">'+esc(o)+'</pre>'; return; } }
+                if (!o || !Array.isArray(o) || o.length === 0) { document.getElementById('playersList').innerHTML = '<div class="empty-state"><div class="empty-icon">&#9675;</div>No players</div>'; return; }
+                document.getElementById('playersList').innerHTML = o.map(function(p) {
+                    var hp = p.MaxHealth ? Math.round((p.Health/p.MaxHealth)*100) : 0;
+                    var pos = p.Position ? p.Position.x+', '+p.Position.y+', '+p.Position.z : '—';
+                    var av = p.UserId ? '<img src="/api/avatar?userId='+p.UserId+'" onerror="this.parentNode.textContent=\''+p.Name.slice(0,2).toUpperCase()+'\'">' : p.Name.slice(0,2).toUpperCase();
+                    return '<div class="player-row"><div class="player-avatar">'+av+'</div><div style="flex:1"><div class="player-name">'+esc(p.DisplayName||p.Name)+'<span style="color:var(--text-muted);font-size:11px;margin-left:6px">@'+esc(p.Name)+'</span></div><div class="player-detail">Pos: '+pos+' | Team: '+esc(p.Team||'None')+'</div></div><div style="text-align:right"><div class="health-bar"><div class="health-fill" style="width:'+hp+'%"></div></div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">'+(p.Health||0)+'/'+(p.MaxHealth||0)+'</div></div></div>';
+                }).join('');
+            } catch(e) {}
+        }
+
+        document.getElementById('playersRefresh').addEventListener('click', loadPlayers);
+        setInterval(loadPlayers, 4000);
+        loadPlayers();
+
+        // ── Console ──
+        async function loadConsole() {
+            try {
+                var res = await fetch('/api/console');
+                var d = await res.json();
+                if (d.error) { document.getElementById('consoleOutput').textContent = d.error; return; }
+                document.getElementById('consoleOutput').textContent = d.output || 'No output';
+            } catch(e) {}
+        }
+
+        document.getElementById('consoleRefresh').addEventListener('click', loadConsole);
+        loadConsole();
+        setInterval(loadConsole, 5000);
+
+        // ── Script Editor ──
+        var scriptHistory = [];
+        var editorCode = document.getElementById('editorCode');
+        var editorResult = document.getElementById('editorResult');
+
+        editorCode.addEventListener('keydown', function(e) {
+            if (e.key==='Tab') { e.preventDefault(); var s=this.selectionStart,en=this.selectionEnd; this.value=this.value.substring(0,s)+'  '+this.value.substring(en); this.selectionStart=this.selectionEnd=s+2; }
+            if (e.ctrlKey && e.key==='Enter') { e.preventDefault(); runEditorCode(); }
+        });
+
+        document.getElementById('editorRun').addEventListener('click', runEditorCode);
+        document.getElementById('editorClear').addEventListener('click', function() { editorCode.value=''; editorResult.textContent='Output appears here...'; editorResult.style.color='var(--text-dim)'; });
+
+        async function runEditorCode() {
+            var code = editorCode.value.trim();
+            if (!code) return;
+            var btn = document.getElementById('editorRun');
+            btn.disabled = true; btn.textContent = 'Running...';
+            editorResult.textContent = 'Executing...'; editorResult.style.color='var(--text-dim)';
+            try {
+                var res = await fetch('/api/execute', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:code}) });
+                var d = await res.json();
+                if (d.error) { editorResult.style.color='var(--red)'; editorResult.textContent='Error: '+d.error; }
+                else { editorResult.style.color='var(--green)'; editorResult.textContent=d.output||'Executed (no return value)'; }
+            } catch(e) { editorResult.style.color='var(--red)'; editorResult.textContent='Failed: '+e.message; }
+            btn.disabled=false; btn.textContent='Execute';
+            scriptHistory.unshift({ code: code.substring(0,200), time: new Date().toLocaleTimeString() });
+            if (scriptHistory.length > 50) scriptHistory.pop();
+            renderHistory();
+        }
+
+        // ── Script History ──
+        function renderHistory() {
+            var el = document.getElementById('historyList');
+            if (scriptHistory.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9675;</div>No scripts executed yet</div>'; return; }
+            el.innerHTML = scriptHistory.map(function(h) {
+                return '<div class="history-row"><span class="history-code">'+esc(h.code)+'</span><span class="history-time">'+h.time+'</span></div>';
+            }).join('');
+        }
+
+        document.getElementById('historyClear').addEventListener('click', function() { scriptHistory=[]; renderHistory(); });
+
+        // ── Quick Actions ──
+        var actionScripts = {
+            esp: 'local Players=game:GetService("Players");local lp=Players.LocalPlayer;for _,p in Players:GetPlayers() do if p~=lp then local function f(c) if not c then return end;local h=Instance.new("Highlight");h.Name="VSC_ESP";h.FillColor=Color3.fromRGB(255,0,0);h.FillTransparency=0.5;h.OutlineColor=Color3.fromRGB(255,255,255);h.Parent=c end;if p.Character then f(p.Character) end;p.CharacterAdded:Connect(f) end end;Players.PlayerAdded:Connect(function(p) if p~=lp then local function f(c) if not c then return end;local h=Instance.new("Highlight");h.Name="VSC_ESP";h.FillColor=Color3.fromRGB(255,0,0);h.FillTransparency=0.5;h.OutlineColor=Color3.fromRGB(255,255,255);h.Parent=c end;if p.Character then f(p.Character) end;p.CharacterAdded:Connect(f) end end);return "ESP enabled"',
+            fly: 'local P=game:GetService("Players");local U=game:GetService("UserInputService");local R=game:GetService("RunService");local lp=P.LocalPlayer;local flying=false;local sp=80;local bv,bg,cn;local function go() local c=lp.Character;if not c then return end;local h=c:FindFirstChild("HumanoidRootPart");if not h then return end;flying=true;bv=Instance.new("BodyVelocity");bv.MaxForce=Vector3.new(1e9,1e9,1e9);bv.Velocity=Vector3.zero;bv.Parent=h;bg=Instance.new("BodyGyro");bg.MaxTorque=Vector3.new(1e9,1e9,1e9);bg.P=9e4;bg.Parent=h;cn=R.RenderStepped:Connect(function() local cam=workspace.CurrentCamera;bg.CFrame=cam.CFrame;local d=Vector3.zero;if U:IsKeyDown(Enum.KeyCode.W) then d=d+cam.CFrame.LookVector end;if U:IsKeyDown(Enum.KeyCode.S) then d=d-cam.CFrame.LookVector end;if U:IsKeyDown(Enum.KeyCode.A) then d=d-cam.CFrame.RightVector end;if U:IsKeyDown(Enum.KeyCode.D) then d=d+cam.CFrame.RightVector end;if U:IsKeyDown(Enum.KeyCode.Space) then d=d+Vector3.yAxis end;if U:IsKeyDown(Enum.KeyCode.LeftShift) then d=d-Vector3.yAxis end;bv.Velocity=d*sp end) end;local function stop() flying=false;if bv then bv:Destroy() end;if bg then bg:Destroy() end;if cn then cn:Disconnect() end end;U.InputBegan:Connect(function(i,g) if g then return end;if i.KeyCode==Enum.KeyCode.E then if flying then stop() else go() end end end);return "Fly loaded — press E to toggle"',
+            noclip: 'local P=game:GetService("Players");local U=game:GetService("UserInputService");local R=game:GetService("RunService");local lp=P.LocalPlayer;local nc=false;local cn;local function on() nc=true;cn=R.Stepped:Connect(function() local c=lp.Character;if not c then return end;for _,p in c:GetDescendants() do if p:IsA("BasePart") then p.CanCollide=false end end end) end;local function off() nc=false;if cn then cn:Disconnect() end end;U.InputBegan:Connect(function(i,g) if g then return end;if i.KeyCode==Enum.KeyCode.N then if nc then off() else on() end end end);return "Noclip loaded — press N to toggle"',
+            speed: 'local c=game:GetService("Players").LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.WalkSpeed=100 end end;return "Speed set to 100"',
+            infinite_jump: 'game:GetService("UserInputService").JumpRequest:Connect(function() local c=game:GetService("Players").LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end end);return "Infinite jump enabled"',
+            fullbright: 'local L=game:GetService("Lighting");L.Brightness=2;L.ClockTime=14;L.FogEnd=1e5;L.GlobalShadows=false;L.OutdoorAmbient=Color3.fromRGB(128,128,128);for _,v in L:GetDescendants() do if v:IsA("Atmosphere") then v.Density=0 end;if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") then v.Enabled=false end end;return "Fullbright enabled"',
+            anti_afk: 'local VU=game:GetService("VirtualUser");game:GetService("Players").LocalPlayer.Idled:Connect(function() VU:CaptureController();VU:ClickButton2(Vector2.new()) end);return "Anti-AFK enabled"',
+            rejoin: 'game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId);return "Rejoining..."',
+            reset_char: 'local c=game:GetService("Players").LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.Health=0 end end;return "Character reset"',
+        };
+
+        var activeActions = {};
+
+        document.querySelectorAll('.action-btn').forEach(function(btn) {
+            btn.addEventListener('click', async function() {
+                var action = btn.dataset.action;
+                var code = actionScripts[action];
+                if (!code) return;
+                btn.style.opacity='0.5';
+                try {
+                    var res = await fetch('/api/execute', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:'return (function() '+code+' end)()'}) });
+                    var d = await res.json();
+                    if (!d.error) {
+                        activeActions[action] = !activeActions[action];
+                        btn.classList.toggle('active-toggle', activeActions[action]);
+                    }
+                } catch(e) {}
+                btn.style.opacity='1';
             });
         });
 
-        /* ── Remote Spy Live Viewer ────────────────────────────── */
-        var spyAutoRefreshEnabled = true;
+        // ── Remote Spy ──
+        var spyAuto = true;
         var spyInterval = null;
 
-        var spyAutoBtn = document.getElementById('spyAutoRefresh');
-        var spyRefreshBtn = document.getElementById('spyRefreshBtn');
-        var spyLog = document.getElementById('spyLog');
-        var spyFilterOut = document.getElementById('spyFilterOutgoing');
-        var spyFilterIn = document.getElementById('spyFilterIncoming');
-        var spyFilter = 'Both';
-
-        spyFilterOut.addEventListener('click', function() {
-            if (spyFilter === 'Outgoing') { spyFilter = 'Both'; spyFilterOut.classList.remove('active'); }
-            else { spyFilter = 'Outgoing'; spyFilterOut.classList.add('active'); spyFilterIn.classList.remove('active'); }
-            fetchSpyLogs();
-        });
-
-        spyFilterIn.addEventListener('click', function() {
-            if (spyFilter === 'Incoming') { spyFilter = 'Both'; spyFilterIn.classList.remove('active'); }
-            else { spyFilter = 'Incoming'; spyFilterIn.classList.add('active'); spyFilterOut.classList.remove('active'); }
-            fetchSpyLogs();
-        });
-
-        async function fetchSpyLogs() {
+        async function fetchSpy() {
             try {
                 var res = await fetch('/api/remote-spy');
-                var data = await res.json();
-                if (data.error) {
-                    spyLog.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>' + data.error + '</div>';
-                    return;
-                }
-                var output = data.output;
-                if (!output || output === '{}' || output === '[]') {
-                    spyLog.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>No remote calls captured yet</div>';
-                    return;
-                }
-                // Parse the Lua-like output and display it
-                spyLog.innerHTML = '<pre style="margin:0;white-space:pre-wrap;word-break:break-all;color:var(--text-secondary)">' + escapeHtml(output) + '</pre>';
-                spyLog.scrollTop = spyLog.scrollHeight;
-            } catch(e) {
-                spyLog.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>Error fetching spy logs</div>';
-            }
+                var d = await res.json();
+                var el = document.getElementById('spyLog');
+                if (d.error) { el.innerHTML = '<div class="empty-state">'+esc(d.error)+'</div>'; return; }
+                if (!d.output || d.output==='{}' || d.output==='[]') { el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9675;</div>No remote calls captured</div>'; return; }
+                el.innerHTML = '<pre style="padding:12px 16px;margin:0;white-space:pre-wrap;word-break:break-all;font-family:var(--mono);font-size:11px;color:var(--text-dim)">'+esc(d.output)+'</pre>';
+                el.scrollTop = el.scrollHeight;
+            } catch(e) {}
         }
 
-        function escapeHtml(str) {
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        }
-
-        spyAutoBtn.addEventListener('click', function() {
-            spyAutoRefreshEnabled = !spyAutoRefreshEnabled;
-            spyAutoBtn.textContent = 'Auto-Refresh: ' + (spyAutoRefreshEnabled ? 'ON' : 'OFF');
-            spyAutoBtn.classList.toggle('active', spyAutoRefreshEnabled);
-            if (spyAutoRefreshEnabled) startSpyInterval(); else stopSpyInterval();
+        document.getElementById('spyToggle').addEventListener('click', function() {
+            spyAuto=!spyAuto;
+            this.textContent='Auto: '+(spyAuto?'ON':'OFF');
+            if (spyAuto) { spyInterval=setInterval(fetchSpy,3000); } else { clearInterval(spyInterval); }
         });
 
-        spyRefreshBtn.addEventListener('click', fetchSpyLogs);
+        document.getElementById('spyRefresh').addEventListener('click', fetchSpy);
+        spyInterval = setInterval(fetchSpy, 3000);
+        fetchSpy();
 
-        function startSpyInterval() { if (spyInterval) clearInterval(spyInterval); spyInterval = setInterval(fetchSpyLogs, 3000); }
-        function stopSpyInterval() { if (spyInterval) { clearInterval(spyInterval); spyInterval = null; } }
-        startSpyInterval();
+        // ── Instance Explorer ──
+        document.getElementById('explorerLoad').addEventListener('click', function() { loadTree(document.getElementById('explorerRoot').value); });
+        document.getElementById('explorerRoot').addEventListener('keydown', function(e) { if (e.key==='Enter') loadTree(this.value); });
 
-        /* ── Script Editor ─────────────────────────────────────── */
-        var editorCode = document.getElementById('editorCode');
-        var editorRunBtn = document.getElementById('editorRunBtn');
-        var editorOutput = document.getElementById('editorOutput');
-
-        editorCode.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
-                this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
-                this.selectionStart = this.selectionEnd = start + 2;
-            }
-            if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); executeEditorCode(); }
-        });
-
-        editorRunBtn.addEventListener('click', executeEditorCode);
-
-        async function executeEditorCode() {
-            var code = editorCode.value.trim();
-            if (!code) return;
-            editorRunBtn.disabled = true;
-            editorRunBtn.textContent = 'Running...';
-            editorOutput.textContent = 'Executing...';
+        async function loadTree(root) {
+            var el = document.getElementById('explorerTree');
+            el.innerHTML = '<div class="empty-state">Loading...</div>';
             try {
-                var res = await fetch('/api/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code })
-                });
-                var data = await res.json();
-                if (data.error) {
-                    editorOutput.style.color = 'var(--error)';
-                    editorOutput.textContent = 'Error: ' + data.error;
-                } else {
-                    editorOutput.style.color = 'var(--success)';
-                    editorOutput.textContent = data.output || 'Executed (no return value)';
-                }
-            } catch(e) {
-                editorOutput.style.color = 'var(--error)';
-                editorOutput.textContent = 'Request failed: ' + e.message;
-            }
-            editorRunBtn.disabled = false;
-            editorRunBtn.textContent = 'Execute';
+                var res = await fetch('/api/instances?root='+encodeURIComponent(root)+'&maxDepth=3&maxChildren=40');
+                var d = await res.json();
+                if (d.error) { el.innerHTML = '<div class="empty-state">'+esc(d.error)+'</div>'; return; }
+                if (!d.output) { el.innerHTML = '<div class="empty-state">No data</div>'; return; }
+                var parsed;
+                try { parsed = JSON.parse(d.output); } catch(e) { el.innerHTML = '<pre style="padding:12px;font-size:11px;color:var(--text-dim)">'+esc(d.output)+'</pre>'; return; }
+                el.innerHTML = '';
+                buildTree(parsed, el);
+            } catch(e) { el.innerHTML = '<div class="empty-state">Error: '+esc(e.message)+'</div>'; }
         }
 
-        /* ── Instance Explorer ─────────────────────────────────── */
-        var explorerRoot = document.getElementById('explorerRoot');
-        var explorerLoadBtn = document.getElementById('explorerLoadBtn');
-        var explorerTree = document.getElementById('explorerTree');
-
-        explorerLoadBtn.addEventListener('click', function() { loadInstanceTree(explorerRoot.value); });
-        explorerRoot.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') loadInstanceTree(explorerRoot.value);
-        });
-
-        async function loadInstanceTree(root) {
-            explorerTree.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>Loading...</div>';
-            try {
-                var res = await fetch('/api/instances?root=' + encodeURIComponent(root) + '&maxDepth=3&maxChildren=40');
-                var data = await res.json();
-                if (data.error) {
-                    explorerTree.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>' + escapeHtml(data.error) + '</div>';
-                    return;
-                }
-                var output = data.output;
-                if (!output) {
-                    explorerTree.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>No data returned</div>';
-                    return;
-                }
-                // Render tree from Lua output
-                try {
-                    var parsed = parseLuaTree(output);
-                    explorerTree.innerHTML = '';
-                    renderTreeNode(parsed, explorerTree, 0);
-                } catch(pe) {
-                    explorerTree.innerHTML = '<pre style="margin:0;white-space:pre-wrap;word-break:break-all;color:var(--text-secondary)">' + escapeHtml(output) + '</pre>';
-                }
-            } catch(e) {
-                explorerTree.innerHTML = '<div class="client-empty"><div class="client-empty-icon">◌</div>Error: ' + escapeHtml(e.message) + '</div>';
-            }
-        }
-
-        function parseLuaTree(str) {
-            // Simple parser for the Lua table output
-            try { return JSON.parse(str); } catch(e) {}
-            // Fallback: return raw as a node
-            return { Name: 'root', ClassName: '?', raw: str };
-        }
-
-        function renderTreeNode(node, parent, depth) {
-            if (!node || typeof node !== 'object') return;
-            if (node.raw) {
-                parent.innerHTML = '<pre style="margin:0;white-space:pre-wrap;word-break:break-all;color:var(--text-secondary)">' + escapeHtml(node.raw) + '</pre>';
-                return;
-            }
-
-            var div = document.createElement('div');
-            div.className = 'tree-node';
-
-            var hasChildren = node.Children && node.Children.length > 0;
-            var icon = hasChildren ? '▸ ' : '  ';
-            var classIcons = { Folder: '📁', ModuleScript: '📦', LocalScript: '📜', Script: '📄', Part: '🧱', Model: '📐', RemoteEvent: '📡', RemoteFunction: '📡' };
-            var ci = classIcons[node.ClassName] || '◆';
-
-            var header = document.createElement('span');
-            header.className = 'tree-toggle';
-            header.innerHTML = icon + ci + ' <span class="tree-name">' + escapeHtml(node.Name || '?') + '</span> <span class="tree-class">' + escapeHtml(node.ClassName || '') + (node.ChildCount ? ' (' + node.ChildCount + ')' : '') + '</span>';
-            div.appendChild(header);
-
-            if (hasChildren) {
-                var childContainer = document.createElement('div');
-                childContainer.className = 'tree-children';
-                childContainer.style.display = 'none';
-
-                node.Children.forEach(function(child) {
-                    renderTreeNode(child, childContainer, depth + 1);
+        function buildTree(node, parent) {
+            if (!node || typeof node!=='object') return;
+            var div = document.createElement('div'); div.className='t-node';
+            var has = node.Children && node.Children.length > 0;
+            var icons = {Folder:'\u{1F4C1}',ModuleScript:'\u{1F4E6}',LocalScript:'\u{1F4DC}',Script:'\u{1F4C4}',Part:'\u{1F9F1}',Model:'\u{1F4D0}',RemoteEvent:'\u{1F4E1}',RemoteFunction:'\u{1F4E1}',Humanoid:'\u{1F9CD}',Camera:'\u{1F3A5}'};
+            var ic = icons[node.ClassName]||'\u25C6';
+            var arrow = has ? '\u25B8 ' : '  ';
+            var hdr = document.createElement('span'); hdr.className='t-toggle';
+            hdr.innerHTML = arrow+ic+' <span class="t-name">'+esc(node.Name||'?')+'</span> <span class="t-class">'+esc(node.ClassName||'')+(node.ChildCount?' ('+node.ChildCount+')':'')+'</span>';
+            div.appendChild(hdr);
+            if (has) {
+                var ch = document.createElement('div'); ch.className='t-children'; ch.style.display='none';
+                node.Children.forEach(function(c) { buildTree(c, ch); });
+                hdr.addEventListener('click', function() {
+                    var open = ch.style.display!=='none';
+                    ch.style.display = open?'none':'block';
+                    hdr.innerHTML = (open?'\u25B8 ':'\u25BE ')+ic+' <span class="t-name">'+esc(node.Name||'?')+'</span> <span class="t-class">'+esc(node.ClassName||'')+(node.ChildCount?' ('+node.ChildCount+')':'')+'</span>';
                 });
-
-                header.addEventListener('click', function() {
-                    var isOpen = childContainer.style.display !== 'none';
-                    childContainer.style.display = isOpen ? 'none' : 'block';
-                    header.innerHTML = (isOpen ? '▸ ' : '▾ ') + ci + ' <span class="tree-name">' + escapeHtml(node.Name || '?') + '</span> <span class="tree-class">' + escapeHtml(node.ClassName || '') + (node.ChildCount ? ' (' + node.ChildCount + ')' : '') + '</span>';
-                });
-
-                div.appendChild(childContainer);
+                div.appendChild(ch);
             }
-
             parent.appendChild(div);
         }
     </script>
