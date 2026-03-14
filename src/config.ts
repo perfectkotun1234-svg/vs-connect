@@ -46,8 +46,6 @@ export const config = {
     "dump-constants": 30000,
     "hook-loadstring": 15000,
     "list-loadstring-calls": 15000,
-    "list-scripts": 1000,
-    "run-script": 30000,
     "execute-all": 30000,
     "get-data-all": 30000,
     "clear-script-cache": 1000,
