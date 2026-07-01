@@ -1404,4 +1404,5 @@ while true do
     end)
 
     Bridge:WaitForDisconnect()
+    task.wait(3)
 end
