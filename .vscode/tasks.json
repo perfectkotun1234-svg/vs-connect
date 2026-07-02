@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Execute in Roblox",
+      "type": "shell",
+      "command": "curl",
+      "args": [
+        "-s",
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-d", "{\"filePath\":\"${file}\",\"returnOutput\":true}",
+        "http://localhost:16384/api/execute-file"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Execute in Roblox (fire & forget)",
+      "type": "shell",
+      "command": "curl",
+      "args": [
+        "-s",
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-d", "{\"filePath\":\"${file}\"}",
+        "http://localhost:16384/api/execute-file"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { boot } from "./bridge/boot.js";
 import { config } from "./config.js";
 import { logger } from "./utils/logger.js";
 import { generateToken } from "./auth.js";
+import { startWatcher } from "./watcher.js";
 
 async function main(): Promise<void> {
   logger.info("VS Connect", "Starting up...");
@@ -26,6 +27,11 @@ async function main(): Promise<void> {
 
   // Boot the bridge (HTTP/WS server for Roblox clients)
   await boot();
+
+  // Start file watcher if --watch directory specified
+  if (config.watchDir) {
+    startWatcher(config.watchDir);
+  }
 
   logger.info("VS Connect", `Ready on port ${config.port}.`);
 }

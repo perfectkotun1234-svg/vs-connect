@@ -67,8 +67,40 @@ Add the MCP server to your Claude Code configuration to start using the tools.
 | `--baseurl <url>` | Connect to remote primary instance | — |
 | `--no-auth` | Disable authentication | Auth enabled |
 | `--webhook <url>` | Discord webhook URL for notifications | — |
+| `--watch <dir>` | Watch directory for auto-execute on save | — |
 
-Environment variables: `VS_CONNECT_PORT`, `VS_CONNECT_TOKEN`, `VS_CONNECT_WEBHOOK`
+Environment variables: `VS_CONNECT_PORT`, `VS_CONNECT_TOKEN`, `VS_CONNECT_WEBHOOK`, `VS_CONNECT_WATCH`
+
+## VS Code Integration
+
+### Execute from VS Code
+
+VS Connect includes built-in VS Code support. Open your `.luau`/`.lua` file and run it on the connected Roblox client:
+
+1. **Task Runner** — Press `Ctrl+Shift+P` → "Run Task" → "Execute in Roblox" to run the current file
+2. **Keybinding** — Copy `.vscode/keybindings.json` to your VS Code keybindings to use `Ctrl+Shift+R`
+3. **Auto-execute on save** — Start with `--watch ./scripts` to auto-execute any `.luau`/`.lua` file when saved
+
+```bash
+# Auto-execute: any file saved in ./scripts runs in Roblox
+node dist/index.js --watch ./scripts
+```
+
+### HTTP API
+
+Execute files programmatically via the `/api/execute-file` endpoint:
+
+```bash
+# Fire and forget
+curl -X POST http://localhost:16384/api/execute-file \
+  -H "Content-Type: application/json" \
+  -d '{"filePath":"/path/to/script.luau"}'
+
+# With return value
+curl -X POST http://localhost:16384/api/execute-file \
+  -H "Content-Type: application/json" \
+  -d '{"filePath":"/path/to/script.luau","returnOutput":true}'
+```
 
 ## Architecture
 

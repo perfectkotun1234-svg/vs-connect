@@ -15,6 +15,7 @@ export const config = {
   noAuth: hasFlag("--no-auth"),
   token: process.env.VS_CONNECT_TOKEN || null,
   webhookUrl: process.env.VS_CONNECT_WEBHOOK || getArg("--webhook") || null,
+  watchDir: process.env.VS_CONNECT_WATCH || getArg("--watch") || null,
 
   httpPollTimeout: 10000,
   promotionJitterMax: 300,

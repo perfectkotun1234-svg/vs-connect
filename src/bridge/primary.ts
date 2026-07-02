@@ -265,6 +265,68 @@ export function startAsPrimary(): Promise<void> {
         return;
       }
 
+      // ── Execute file from disk (VS Code integration) ──
+      if (url.pathname === "/api/execute-file" && req.method === "POST") {
+        if (!checkAuth(req, res)) return;
+        const body = await readBody(req);
+        try {
+          const { filePath, clientId, returnOutput } = JSON.parse(body);
+          if (!filePath || typeof filePath !== "string") {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Missing filePath" }));
+            return;
+          }
+          const fs = await import("fs");
+          if (!fs.existsSync(filePath)) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: `File not found: ${filePath}` }));
+            return;
+          }
+          const code = fs.readFileSync(filePath, "utf-8");
+          if (!code.trim()) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "File is empty" }));
+            return;
+          }
+          const target = resolveTargetClient(clientId);
+          if (!target) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "No client connected" }));
+            return;
+          }
+          const crypto = await import("crypto");
+          const id = crypto.randomUUID();
+          const { SendArbitraryDataToClient: send, GetResponseOfIdFromClient: getResp } = await import("./transport.js");
+          if (returnOutput) {
+            send("get-data-by-code", { source: `setthreadidentity(8);${code}` }, id, target.clientId);
+            const response = await getResp(id, 30000);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true, file: filePath, output: response?.output ?? response?.error ?? "No response" }));
+          } else {
+            send("execute", { source: `setthreadidentity(8)\n${code}` }, undefined, target.clientId);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true, file: filePath }));
+          }
+        } catch (err: any) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+
+      // ── Watcher execution log API ──
+      if (url.pathname === "/api/watcher-log" && req.method === "GET") {
+        try {
+          const { getExecutionLog } = await import("../watcher.js");
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ log: getExecutionLog() }));
+        } catch {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ log: [] }));
+        }
+        return;
+      }
+
       // ── Execute (fire-and-forget, no return) API ──
       if (url.pathname === "/api/execute-fire" && req.method === "POST") {
         const body = await readBody(req);
