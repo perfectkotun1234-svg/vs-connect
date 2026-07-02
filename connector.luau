@@ -266,7 +266,7 @@ local BaseBridge = {}; do
 
     function BaseBridge:SendHeartbeat()
         pcall(function()
-            request({
+            local ok, _ = pcall(request, {
                 Url = "http://" .. BridgeURL .. "/api/heartbeat",
                 Method = "POST",
                 Headers = {
@@ -277,6 +277,13 @@ local BaseBridge = {}; do
                     clientId = self.ClientId
                 })
             })
+            if not ok and self.ClientId then
+                pcall(request, {
+                    Url = "http://" .. BridgeURL .. "/api/heartbeat?clientId=" .. self.ClientId,
+                    Method = "GET",
+                    Headers = getAuthHeaders(),
+                })
+            end
         end)
     end
 end
@@ -376,19 +383,43 @@ local HTTPBridge = setmetatable({}, {__index = BaseBridge}); do
         self.ClientId = nil
         self.IdleCount = 0
 
-        -- Register with auth
+        -- Register (try POST first, fall back to GET for executors that block POST to localhost)
         pcall(function()
+            local regInfo = GetRegistrationInfo()
             local headers = { ["Content-Type"] = "application/json" }
             if AuthToken then headers["Authorization"] = "Bearer " .. AuthToken end
 
-            local regResponse = request({
+            local ok, regResponse = pcall(request, {
                 Url = "http://" .. BridgeURL .. "/register",
                 Method = "POST",
                 Headers = headers,
-                Body = HttpService:JSONEncode(GetRegistrationInfo()),
+                Body = HttpService:JSONEncode(regInfo),
             })
-            if regResponse.StatusCode == 200 and regResponse.Body then
+
+            if ok and regResponse.StatusCode == 200 and regResponse.Body then
                 local regData = HttpService:JSONDecode(regResponse.Body)
+                self.ClientId = regData.clientId
+                return
+            end
+
+            -- POST failed — try GET-based registration
+            local player = Players.LocalPlayer
+            local getUrl = "http://" .. BridgeURL .. "/register"
+                .. "?username=" .. (player and player.Name or "Unknown")
+                .. "&userId=" .. (player and player.UserId or 0)
+                .. "&placeId=" .. game.PlaceId
+                .. "&jobId=" .. game.JobId
+                .. "&placeName=" .. HttpService:UrlEncode(regInfo.placeName)
+            local getHeaders = {}
+            if AuthToken then getHeaders["Authorization"] = "Bearer " .. AuthToken end
+
+            local ok2, getResponse = pcall(request, {
+                Url = getUrl,
+                Method = "GET",
+                Headers = getHeaders,
+            })
+            if ok2 and getResponse.StatusCode == 200 and getResponse.Body then
+                local regData = HttpService:JSONDecode(getResponse.Body)
                 self.ClientId = regData.clientId
             end
         end)
@@ -444,12 +475,21 @@ local HTTPBridge = setmetatable({}, {__index = BaseBridge}); do
                         local respHeaders = { ["Content-Type"] = "application/json" }
                         if AuthToken then respHeaders["Authorization"] = "Bearer " .. AuthToken end
 
-                        request({
+                        -- Try POST first, fall back to GET for executors that block POST
+                        local okResp, _ = pcall(request, {
                             Url = "http://" .. BridgeURL .. "/respond",
                             Method = "POST",
                             Headers = respHeaders,
                             Body = HttpService:JSONEncode(result)
                         })
+                        if not okResp then
+                            local encoded = HttpService:UrlEncode(HttpService:JSONEncode(result))
+                            pcall(request, {
+                                Url = "http://" .. BridgeURL .. "/respond?data=" .. encoded,
+                                Method = "GET",
+                                Headers = getAuthHeaders(),
+                            })
+                        end
                     end
                 end)
 

@@ -107,10 +107,14 @@ export function startAsPrimary(): Promise<void> {
 
       // ── All routes below require auth ──
 
-      // ── Heartbeat ──
-      if (url.pathname === "/api/heartbeat" && req.method === "POST") {
+      // ── Heartbeat (POST or GET) ──
+      if (url.pathname === "/api/heartbeat" && (req.method === "POST" || req.method === "GET")) {
         if (!checkAuth(req, res)) return;
-        const cid = url.searchParams.get("clientId");
+        let cid = url.searchParams.get("clientId");
+        if (!cid && req.method === "POST") {
+          const body = await readBody(req);
+          try { cid = JSON.parse(body).clientId; } catch {}
+        }
         if (cid && handleHeartbeat(cid)) {
           res.writeHead(200); res.end("OK");
         } else {
@@ -165,6 +169,18 @@ export function startAsPrimary(): Promise<void> {
         const body = await readBody(req);
         try {
           handleRobloxResponse(JSON.parse(body));
+          res.writeHead(200); res.end("OK");
+        } catch { res.writeHead(400); res.end("Invalid JSON"); }
+        return;
+      }
+
+      // ── HTTP response via GET (for executors that block POST to localhost) ──
+      if (url.pathname === "/respond" && req.method === "GET") {
+        if (!checkAuth(req, res)) return;
+        const data = url.searchParams.get("data");
+        if (!data) { res.writeHead(400); res.end("Missing data param"); return; }
+        try {
+          handleRobloxResponse(JSON.parse(decodeURIComponent(data)));
           res.writeHead(200); res.end("OK");
         } catch { res.writeHead(400); res.end("Invalid JSON"); }
         return;
