@@ -52,6 +52,22 @@ export function startAsPrimary(): Promise<void> {
         return;
       }
 
+      // ── GET-based registration (for executors that block POST to localhost) ──
+      if (url.pathname === "/register" && req.method === "GET") {
+        if (!checkAuth(req, res)) return;
+        const username = url.searchParams.get("username") || "Unknown";
+        const userId = parseInt(url.searchParams.get("userId") || "0", 10);
+        const placeId = parseInt(url.searchParams.get("placeId") || "0", 10);
+        const jobId = url.searchParams.get("jobId") || "";
+        const placeName = url.searchParams.get("placeName") || "Unknown";
+        const clientId = registerClient({
+          username, userId, placeId, jobId, placeName, transport: "http",
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ clientId }));
+        return;
+      }
+
       // ── API Status (no auth) ──
       if (url.pathname === "/api/status" && req.method === "GET") {
         const active = getActiveClients();
