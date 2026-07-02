@@ -78,4 +78,23 @@ export function registerExecutionTools(server: McpServer): void {
       return { success: true, content: [{ type: "text" as const, text: response.output }] };
     }
   );
+
+  server.registerTool(
+    "launch-darkdex",
+    {
+      title: "Launch DarkDex Explorer",
+      description: "Load DarkDex (Dex Explorer) in the Roblox Game Client. DarkDex is an in-game instance explorer that lets you browse, inspect, and modify the game's instance tree.",
+      inputSchema: z.object({
+        clientId: clientIdSchema,
+      }),
+    },
+    async ({ clientId }) => {
+      const result = SendArbitraryDataToClient("execute", {
+        source: 'setthreadidentity(8)\nloadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()',
+      }, undefined, clientId);
+      const err = checkSendResult(result);
+      if (err) return err;
+      return makeTextResponse("DarkDex explorer has been loaded in the game client.");
+    }
+  );
 }

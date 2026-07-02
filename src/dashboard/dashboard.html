@@ -538,6 +538,9 @@
                         <button class="action-btn" data-action="reset_char" id="act-reset_char">
                             <span class="action-icon">&#128128;</span>Reset
                         </button>
+                        <button class="action-btn" data-action="darkdex" id="act-darkdex">
+                            <span class="action-icon">&#128270;</span>DarkDex
+                        </button>
                     </div>
                 </div>
             </div>
@@ -742,6 +745,7 @@
             anti_afk: 'local VU=game:GetService("VirtualUser");game:GetService("Players").LocalPlayer.Idled:Connect(function() VU:CaptureController();VU:ClickButton2(Vector2.new()) end);return "Anti-AFK enabled"',
             rejoin: 'game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId);return "Rejoining..."',
             reset_char: 'local c=game:GetService("Players").LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.Health=0 end end;return "Character reset"',
+            darkdex: 'loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))();return "DarkDex loaded"',
         };
 
         var activeActions = {};
