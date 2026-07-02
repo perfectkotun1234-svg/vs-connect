@@ -744,6 +744,26 @@ local function ParseQuery(query)
     return stringMatchQueries
 end
 
+--// Auto-load DarkDex \\--
+local DarkDexLoaded = false
+local function LoadDarkDex()
+    if DarkDexLoaded then return end
+    DarkDexLoaded = true
+    task.spawn(function()
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+        end)
+        if not ok then
+            warn("[VS Connect] Failed to load DarkDex: " .. tostring(err))
+            DarkDexLoaded = false
+        end
+    end)
+end
+
+if getgenv().VSConnectDarkDex ~= false then
+    LoadDarkDex()
+end
+
 --// Main Loop \\--
 while true do
     local Bridge = CreateBridge()
