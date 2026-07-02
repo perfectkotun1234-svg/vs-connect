@@ -266,7 +266,7 @@ local BaseBridge = {}; do
 
     function BaseBridge:SendHeartbeat()
         pcall(function()
-            local ok, _ = pcall(request, {
+            local ok, res = pcall(request, {
                 Url = "http://" .. BridgeURL .. "/api/heartbeat",
                 Method = "POST",
                 Headers = {
@@ -277,7 +277,7 @@ local BaseBridge = {}; do
                     clientId = self.ClientId
                 })
             })
-            if not ok and self.ClientId then
+            if (not ok or (ok and res and res.StatusCode ~= 200)) and self.ClientId then
                 pcall(request, {
                     Url = "http://" .. BridgeURL .. "/api/heartbeat?clientId=" .. self.ClientId,
                     Method = "GET",
@@ -476,13 +476,13 @@ local HTTPBridge = setmetatable({}, {__index = BaseBridge}); do
                         if AuthToken then respHeaders["Authorization"] = "Bearer " .. AuthToken end
 
                         -- Try POST first, fall back to GET for executors that block POST
-                        local okResp, _ = pcall(request, {
+                        local okResp, respRes = pcall(request, {
                             Url = "http://" .. BridgeURL .. "/respond",
                             Method = "POST",
                             Headers = respHeaders,
                             Body = HttpService:JSONEncode(result)
                         })
-                        if not okResp then
+                        if not okResp or (okResp and respRes and respRes.StatusCode ~= 200) then
                             local encoded = HttpService:UrlEncode(HttpService:JSONEncode(result))
                             pcall(request, {
                                 Url = "http://" .. BridgeURL .. "/respond?data=" .. encoded,
