@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vs-connect": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["dist/index.js", "--no-auth"]
+    }
+  }
+}
